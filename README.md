@@ -7,4 +7,4 @@ How to test
 2. similarity
 
 Test site
-[https://grt.lakera.ai](https://grt.lakera.ai/mosscap)https://grt.lakera.ai/mosscap
+[https://grt.lakera.ai](https://grt.lakera.ai/mosscap)
