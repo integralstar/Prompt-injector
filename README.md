@@ -1,6 +1,4 @@
-# Prompt-injector
-
-AI prompt injection scanner
+# AI Model prompt injector
 
 How to test
 1. Regular Expression
