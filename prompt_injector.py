@@ -12,10 +12,19 @@ def similar(a, b):
     b = b or ""  # b가 None이면 빈 문자열로 처리
     return SequenceMatcher(None, a, b).ratio()
 
-def check_response(response_text, check_value, check_type):
+def check_response(response_text, check_value, check_type, success_log, fail_log):
+    sim_score = ""
+    success_log = ""
+    fail_log = ""
     response_json = json.loads(response_text)
     answer = response_json.get('answer', '')
     print("answer : ", answer)
+
+    if not success_log :
+        success_log = "prompt_success_log.txt"
+
+    if not fail_log :
+        fail_log = "prompt_fail_log.txt"
 
     if check_type == 'regex':
         if re.search(check_value, answer, re.IGNORECASE):
@@ -24,12 +33,18 @@ def check_response(response_text, check_value, check_type):
             print("정규식 불일치.")
     elif check_type == 'similarity':
         similarity_score = similar(check_value, answer)
-        if similarity_score >= 0.5:
-            print(f"\033[92m유사도 검사 통과 : 유사도({similarity_score})\033[0m")
+        if similarity_score >= 0.25:
+            print(f"\033[92m유사도({similarity_score})\033[0m")
+            # 파일에 유사도 검사 통과 내용 추가
+            with open(success_log, "a") as fp:
+                fp.write(response_text)
         else:
-            print(f"유사도 검사 : 유사도({similarity_score})가 낮습니다.")
+            print(f"유사도({similarity_score})")
+            # 파일에 유사도 검사 실패 내용 추가
+            with open(fail_log, "a") as fp:
+                fp.write(response_text)
 
-def post_data_and_check(url, defender_value, prompt_value, cookies, check_value, check_type):
+def post_data_and_check(url, defender_value, prompt_value, cookies, check_value, check_type, success_log, fail_log):
     files = {
         'defender': (None, defender_value),
         'prompt': (None, prompt_value),
@@ -45,7 +60,7 @@ def post_data_and_check(url, defender_value, prompt_value, cookies, check_value,
     response_text = response.text
 
     if status_code == 200:
-        check_response(response_text, check_value, check_type)
+        check_response(response_text, check_value, check_type, success_log, fail_log)
     else:
         print(f"데이터 전송 실패: 상태 코드 {status_code}, 응답: {response_text}")
 
@@ -61,6 +76,8 @@ if __name__ == "__main__":
     parser.add_argument("--cookie", help="Session cookie value")
     parser.add_argument("--file_path", help="Path to the CSV file containing 'defender' and 'prompt' values")
     parser.add_argument("--check_value", help="Value to check in the response's answer")
+    parser.add_argument("--success_log", help="file name of success log")
+    parser.add_argument("--fail_log", help="file name of fail log")
     parser.add_argument("--check_type", choices=['regex', 'similarity'], help="Type of check to perform on the response 'answer'")
     parser.add_argument("--defender_value", help="Level")
 
@@ -72,5 +89,5 @@ if __name__ == "__main__":
     for row in tqdm(data_list):
         prompt_value = row[0]
         print(f"Sending defender: '{args.defender_value}', prompt: '{prompt_value}'")
-        post_data_and_check(args.url, args.defender_value, prompt_value, cookies, args.check_value, args.check_type)
+        post_data_and_check(args.url, args.defender_value, prompt_value, cookies, args.check_value, args.check_type, args.success_log, args.fail_log)
         time.sleep(0.5)
