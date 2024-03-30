@@ -78,16 +78,18 @@ if __name__ == "__main__":
     parser.add_argument("--check_value", help="Value to check in the response's answer")
     parser.add_argument("--success_log", help="file name of success log")
     parser.add_argument("--fail_log", help="file name of fail log")
-    parser.add_argument("--check_type", choices=['regex', 'similarity'], help="Type of check to perform on the response 'answer'")
+    parser.add_argument("--check_type", choices=['regex', 'similarity'], default="similarity", help="Type of check to perform on the response 'answer'")
     parser.add_argument("--defender_value", help="Level")
+    parser.add_argument("--start_index", type=int, default=0, help="Start index")
+    parser.add_argument("--delay_time", type=float, default=5.0, help="delay seconds")
 
     args = parser.parse_args()
 
     cookies = {'session': args.cookie}
     data_list = read_csv_to_memory(args.file_path)
 
-    for row in tqdm(data_list):
-        prompt_value = row[0]
+    for i in tqdm(range(int(args.start_index), len(data_list), 1)):
+        prompt_value = data_list[i][0]
         print(f"Sending defender: '{args.defender_value}', prompt: '{prompt_value}'")
         post_data_and_check(args.url, args.defender_value, prompt_value, cookies, args.check_value, args.check_type, args.success_log, args.fail_log)
-        time.sleep(0.5)
+        time.sleep(args.delay_time)
